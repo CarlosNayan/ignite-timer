@@ -18,9 +18,4 @@ export const GlobalStyle = createGlobalStyle`
 		font-weight: 400;
 		font-size: 1rem;
 	}
-
-	:focus {
-		outline: 0;
-		box-shadow: 0 0 0 2px ${({ theme }) => theme["green-500"]};
-	}
 `;
