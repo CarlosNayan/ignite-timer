@@ -1,42 +1,132 @@
-import { Play } from "phosphor-react";
-import styled from "styled-components";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Play, Stop } from "phosphor-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import styled from "styled-components";
 import z from "zod";
 
 const newFormValidationSchema = z.object({
   task: z.string().min(1, { message: "O valor deve ser maior que 0" }),
   minutesAmount: z
     .number()
-    .min(5, { message: "O valor deve ser maior que 5" })
+    .min(1, { message: "O valor deve ser maior que 5" })
     .max(60, { message: "O valor deve ser menor que 60" }),
 });
 
 type NewCycleFormData = z.infer<typeof newFormValidationSchema>;
 
+type Cycle = {
+  id: string;
+  task: string;
+  minutesAmount: number;
+  interruptedDate?: Date | null;
+  finishedDate?: Date | null;
+};
+
 export function HomePage() {
+  const [cycles, setCycles] = useState<Cycle[]>([]);
+  const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
+  const [amountMinutesPassed, setamountMinutesPassed] = useState(0);
+
   const {
     register,
     handleSubmit,
     watch,
     reset,
-    formState: { errors },
+    // formState: { errors },
   } = useForm<NewCycleFormData>({
     resolver: zodResolver(newFormValidationSchema),
     defaultValues: {
-      task: "",
-      minutesAmount: 0,
+      task: undefined,
+      minutesAmount: undefined,
     },
   });
 
   function handleCreateNewCycle(data: NewCycleFormData) {
+    const newCycle: Cycle = {
+      id: String(new Date().getTime()),
+      task: data.task,
+      minutesAmount: data.minutesAmount,
+    };
+
+    setCycles((prev) => [...prev, newCycle]);
+    setActiveCycleId(newCycle.id);
+    setamountMinutesPassed(0);
     reset();
-    console.log(data);
   }
+
+  function handleInterruptCycle() {
+    setCycles((prev) =>
+      prev.map((cycle) => {
+        if (cycle.id === activeCycleId) {
+          return {
+            ...cycle,
+            interruptedDate: new Date(),
+          };
+        } else {
+          return cycle;
+        }
+      })
+    );
+    setActiveCycleId(null);
+    setamountMinutesPassed(0);
+    document.title = "Ignite Timer";
+  }
+
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
+
+  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0;
+
+  const currentSeconds = activeCycle ? totalSeconds - amountMinutesPassed : 0;
+
+  const minutesAmount = Math.floor(currentSeconds / 60);
+  const secondsAmount = currentSeconds % 60;
+
+  const minutes = String(minutesAmount.toFixed(0)).padStart(2, "0");
+  const seconds = String(secondsAmount.toFixed(0)).padStart(2, "0");
 
   const isValid = watch("task");
 
-  console.log(errors);
+  useEffect(() => {
+    let interval: number;
+
+    if (activeCycle) {
+      interval = setInterval(() => {
+        const timeDiff = (
+          (new Date().getTime() - Number(activeCycle.id)) /
+          1000
+        ).toFixed(0);
+
+        if (Number(timeDiff) >= totalSeconds) {
+          setCycles((prev) =>
+            prev.map((cycle) => {
+              if (cycle.id === activeCycleId) {
+                return {
+                  ...cycle,
+                  finishedDate: new Date(),
+                };
+              } else {
+                return cycle;
+              }
+            })
+          );
+          setActiveCycleId(null);
+          setamountMinutesPassed(totalSeconds);
+          document.title = "Ignite Timer";
+          clearInterval(interval);
+        } else {
+          setamountMinutesPassed(Number(timeDiff));
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [activeCycle, activeCycleId, totalSeconds]);
+
+  useEffect(() => {
+    if (activeCycle) {
+      document.title = `${activeCycle.task} - ${minutes}:${seconds}`;
+    }
+  }, [minutes, seconds, activeCycle]);
 
   return (
     <HomeContainer>
@@ -47,6 +137,7 @@ export function HomePage() {
           id="task"
           list="task-suggestions"
           placeholder="Dê um nome para o seu projeto"
+          disabled={!!activeCycle}
           {...register("task")}
         />
 
@@ -62,6 +153,7 @@ export function HomePage() {
           type="number"
           id="minutesAmount"
           placeholder="00"
+          disabled={!!activeCycle}
           {...register("minutesAmount", {
             valueAsNumber: true,
             min: 1,
@@ -71,20 +163,31 @@ export function HomePage() {
         <span>minutos.</span>
       </Form>
       <CountDownContainer>
-        <span>0</span>
-        <span>0</span>
+        <span>{minutes[0]}</span>
+        <span>{minutes[1]}</span>
         <Separator>:</Separator>
-        <span>0</span>
-        <span>0</span>
+        <span>{seconds[0]}</span>
+        <span>{seconds[1]}</span>
       </CountDownContainer>
-      <Button
-        disabled={!isValid}
-        type="submit"
-        onClick={handleSubmit(handleCreateNewCycle)}
-      >
-        <Play size={24} />
-        Começar
-      </Button>
+      {activeCycle ? (
+        <Button
+          disabled={!activeCycle}
+          type="button"
+          onClick={handleInterruptCycle}
+        >
+          <Stop size={24} />
+          Interromper
+        </Button>
+      ) : (
+        <Button
+          disabled={!isValid}
+          type="submit"
+          onClick={handleSubmit(handleCreateNewCycle)}
+        >
+          <Play size={24} />
+          Começar
+        </Button>
+      )}
     </HomeContainer>
   );
 }
@@ -202,12 +305,15 @@ const Separator = styled.div`
   justify-content: center;
 `;
 
-const Button = styled.button`
+const Button = styled.button<{ type: "submit" | "button" }>`
   width: 100%;
   border: 0;
   cursor: pointer;
   color: ${(props) => props.theme["gray-100"]};
-  background: ${(props) => props.theme["green-500"]};
+  background: ${(props) =>
+    props.type === "submit"
+      ? props.theme["green-500"]
+      : props.theme["red-500"]};
   border-radius: 8px;
   padding: 1rem;
   display: flex;
@@ -219,7 +325,10 @@ const Button = styled.button`
   max-width: 40rem;
 
   &:not(:disabled):hover {
-    background: ${(props) => props.theme["green-700"]};
+    background: ${(props) =>
+      props.type === "submit"
+        ? props.theme["green-700"]
+        : props.theme["red-700"]};
   }
 
   &:disabled {
