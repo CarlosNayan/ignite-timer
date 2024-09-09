@@ -1,6 +1,10 @@
+import { useContext } from "react";
 import styled from "styled-components";
+import { CyclesContext } from "../../contexts/CyclesContext";
 
 export function HistoryPage() {
+  const { cycles } = useContext(CyclesContext);
+
   return (
     <HistoryContainer>
       <h1>Meu Histórico</h1>
@@ -16,30 +20,33 @@ export function HistoryPage() {
           </thead>
 
           <tbody>
-            <tr>
-              <td>Tarefa</td>
-              <td>20 minutos</td>
-              <td>Há 2 meses</td>
-              <td>
-                <Status variant="green">Concluído</Status>
-              </td>
-            </tr>
-            <tr>
-              <td>Tarefa</td>
-              <td>20 minutos</td>
-              <td>Há 2 meses</td>
-              <td>
-                <Status variant="red">Interrompido</Status>
-              </td>
-            </tr>
-            <tr>
-              <td>Tarefa</td>
-              <td>20 minutos</td>
-              <td>Há 2 meses</td>
-              <td>
-                <Status variant="yellow">Em andamento</Status>
-              </td>
-            </tr>
+            {cycles.map((cycle) => {
+              return (
+                <tr key={cycle.id}>
+                  <td>{cycle.task}</td>
+                  <td>{cycle.minutesAmount} minutos</td>
+                  <td>
+                    {new Date(Number(cycle.id)).toLocaleDateString("pt-BR", {
+                      timeZone: "UTC -3:00",
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </td>
+                  <td>
+                    {cycle.finishedDate && (
+                      <Status variant="green">Concluído</Status>
+                    )}
+                    {cycle.interruptedDate && (
+                      <Status variant="red">Interrompido</Status>
+                    )}
+                    {!cycle.interruptedDate && !cycle.finishedDate && (
+                      <Status variant="yellow">Em andamento</Status>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </HistoryList>

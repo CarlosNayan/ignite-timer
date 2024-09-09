@@ -1,18 +1,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Play, Stop } from "phosphor-react";
-import { useState } from "react";
+import { useContext } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import styled from "styled-components";
+import { CyclesContext } from "../../contexts/CyclesContext";
+import {
+  NewCycleFormData,
+  newFormValidationSchema,
+} from "../../schemas/z.newFormValidationSchema";
+import { Cycle } from "../../types/cycles";
 import { Countdown } from "./components/Countdown";
 import { NewCycleForm } from "./components/NewCycleForm";
-import { Cycle } from "../../types/cycles";
-import { CyclesContext } from "../../contexts/CyclesContext";
-import { NewCycleFormData, newFormValidationSchema } from "../../schemas/z.newFormValidationSchema";
 
 export function HomePage() {
-  const [cycles, setCycles] = useState<Cycle[]>([]);
-  const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
-  const [amountMinutesPassed, setAmountMinutesPassed] = useState(0);
+  const { activeCycle, setCycles, setActiveCycleId, setAmountMinutesPassed } =
+    useContext(CyclesContext);
 
   const methods = useForm<NewCycleFormData>({
     resolver: zodResolver(newFormValidationSchema),
@@ -40,7 +42,7 @@ export function HomePage() {
   function handleInterruptCycle() {
     setCycles((prev) =>
       prev.map((cycle) => {
-        if (cycle.id === activeCycleId) {
+        if (cycle.id === activeCycle?.id) {
           return {
             ...cycle,
             interruptedDate: new Date(),
@@ -55,47 +57,34 @@ export function HomePage() {
     document.title = "Ignite Timer";
   }
 
-  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
-
   const isValid = watch("task");
 
   return (
-    <CyclesContext.Provider
-      value={{
-        cycles,
-        activeCycle,
-        amountMinutesPassed,
-        setAmountMinutesPassed,
-        setCycles,
-        setActiveCycleId,
-      }}
-    >
-      <HomeContainer>
-        <FormProvider {...methods}>
-          <NewCycleForm />
-        </FormProvider>
-        <Countdown />
-        {activeCycle ? (
-          <Button
-            disabled={!activeCycle}
-            type="button"
-            onClick={handleInterruptCycle}
-          >
-            <Stop size={24} />
-            Interromper
-          </Button>
-        ) : (
-          <Button
-            disabled={!isValid}
-            type="submit"
-            onClick={handleSubmit(handleCreateNewCycle)}
-          >
-            <Play size={24} />
-            Começar
-          </Button>
-        )}
-      </HomeContainer>
-    </CyclesContext.Provider>
+    <HomeContainer>
+      <FormProvider {...methods}>
+        <NewCycleForm />
+      </FormProvider>
+      <Countdown />
+      {activeCycle ? (
+        <Button
+          disabled={!activeCycle}
+          type="button"
+          onClick={handleInterruptCycle}
+        >
+          <Stop size={24} />
+          Interromper
+        </Button>
+      ) : (
+        <Button
+          disabled={!isValid}
+          type="submit"
+          onClick={handleSubmit(handleCreateNewCycle)}
+        >
+          <Play size={24} />
+          Começar
+        </Button>
+      )}
+    </HomeContainer>
   );
 }
 

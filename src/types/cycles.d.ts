@@ -1,5 +1,5 @@
 export type CyclesContextData = {
-  cycles: Cycle[];
+  cycles: Cycle[] | [];
   activeCycle: Cycle | undefined;
   amountMinutesPassed: number;
   setAmountMinutesPassed: React.Dispatch<React.SetStateAction<number>>;
