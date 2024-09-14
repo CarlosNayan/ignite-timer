@@ -7,7 +7,7 @@ export type CyclesReducerProps = {
 
 export type CyclesContextAction = {
   type: CyclesActionTypes;
-  payload: Cycle | string;
+  payload?: Cycle;
 };
 
 export enum CyclesActionTypes {
@@ -30,7 +30,7 @@ export function CyclesReducer(
 
     case CyclesActionTypes.INTERRUPT_CURRENT_CYCLE: {
       const updatedCyclesInterrupt = state.cycles.map((cycle) => {
-        if (cycle.id === action.payload) {
+        if (cycle.id === state.activeCycle?.id) {
           return {
             ...cycle,
             interruptedDate: new Date(),
@@ -47,7 +47,7 @@ export function CyclesReducer(
 
     case CyclesActionTypes.FINISH_CURRENT_CYCLE: {
       const updatedCyclesFinish = state.cycles.map((cycle) => {
-        if (cycle.id === action.payload) {
+        if (cycle.id === state.activeCycle?.id) {
           return {
             ...cycle,
             finishedDate: new Date(),

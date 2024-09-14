@@ -1,4 +1,4 @@
-import { createContext, useReducer, useState } from "react";
+import { createContext, useEffect, useReducer, useState } from "react";
 import { CyclesActionTypes, CyclesReducer } from "../reducers/cycles";
 import { NewCycleFormData } from "../schemas/z.newFormValidationSchema";
 import { Cycle, CyclesContextData } from "../types/cycles";
@@ -10,12 +10,26 @@ export function CyclesContextProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [cyclesContextData, dispatch] = useReducer(CyclesReducer, {
-    cycles: [],
-    activeCycle: undefined,
-  });
+  const [cyclesContextData, dispatch] = useReducer(
+    CyclesReducer,
+    {
+      cycles: [],
+      activeCycle: undefined,
+    },
+    (initialState) => {
+      const storedCycles = localStorage.getItem(
+        "@ignite-timer:cycles-state-1.0.0"
+      );
 
-  const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
+      if (storedCycles) {
+        return JSON.parse(storedCycles);
+      } else {
+        return initialState;
+      }
+    }
+  );
+  const { cycles, activeCycle } = cyclesContextData;
+
   const [amountMinutesPassed, setAmountMinutesPassed] = useState(0);
 
   function createNewCycle(data: NewCycleFormData) {
@@ -30,41 +44,37 @@ export function CyclesContextProvider({
       payload: newCycle,
     });
 
-    setActiveCycleId(newCycle.id);
     setAmountMinutesPassed(0);
   }
 
   function interruptCycle() {
-    if (!activeCycleId) return;
+    if (!activeCycle?.id) return;
     dispatch({
       type: CyclesActionTypes.INTERRUPT_CURRENT_CYCLE,
-      payload: activeCycleId,
     });
-    setActiveCycleId(null);
     setAmountMinutesPassed(0);
     document.title = "Ignite Timer";
   }
 
   function finishCycle() {
-    if (!activeCycleId) return;
+    if (!activeCycle?.id) return;
     dispatch({
       type: CyclesActionTypes.FINISH_CURRENT_CYCLE,
-      payload: activeCycleId,
     });
-    setActiveCycleId(null);
     setAmountMinutesPassed(0);
     document.title = "Ignite Timer";
   }
 
-  const { cycles, activeCycle } = cyclesContextData;
-
+  useEffect(() => {
+    const stateJSON = JSON.stringify(cyclesContextData);
+    localStorage.setItem("@ignite-timer:cycles-state-1.0.0", stateJSON);
+  }, [cyclesContextData]);
   return (
     <CyclesContext.Provider
       value={{
         cycles,
         activeCycle,
         amountMinutesPassed,
-        setActiveCycleId,
         setAmountMinutesPassed,
         createNewCycle,
         interruptCycle,

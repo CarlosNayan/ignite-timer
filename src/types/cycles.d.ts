@@ -3,7 +3,6 @@ export type CyclesContextData = {
   activeCycle: Cycle | undefined;
   amountMinutesPassed: number;
   setAmountMinutesPassed: React.Dispatch<React.SetStateAction<number>>;
-  setActiveCycleId: React.Dispatch<React.SetStateAction<string | null>>;
   createNewCycle: (data: NewCycleFormData) => void;
   interruptCycle: () => void;
   finishCycle: () => void;
