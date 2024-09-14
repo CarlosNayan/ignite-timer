@@ -3,8 +3,10 @@ export type CyclesContextData = {
   activeCycle: Cycle | undefined;
   amountMinutesPassed: number;
   setAmountMinutesPassed: React.Dispatch<React.SetStateAction<number>>;
-  setCycles: React.Dispatch<React.SetStateAction<Cycle[]>>;
   setActiveCycleId: React.Dispatch<React.SetStateAction<string | null>>;
+  createNewCycle: (data: NewCycleFormData) => void;
+  interruptCycle: () => void;
+  finishCycle: () => void;
 };
 
 export type Cycle = {

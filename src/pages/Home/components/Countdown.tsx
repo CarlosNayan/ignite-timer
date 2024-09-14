@@ -7,8 +7,7 @@ export function Countdown() {
     activeCycle,
     amountMinutesPassed,
     setAmountMinutesPassed,
-    setCycles,
-    setActiveCycleId,
+    finishCycle,
   } = useContext(CyclesContext);
   const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0;
 
@@ -31,21 +30,7 @@ export function Countdown() {
         ).toFixed(0);
 
         if (Number(timeDiff) >= totalSeconds) {
-          setCycles((prev) =>
-            prev.map((cycle) => {
-              if (cycle.id === activeCycle.id) {
-                return {
-                  ...cycle,
-                  finishedDate: new Date(),
-                };
-              } else {
-                return cycle;
-              }
-            })
-          );
-          setActiveCycleId(null);
-          setAmountMinutesPassed(totalSeconds);
-          document.title = "Ignite Timer";
+          finishCycle();
           clearInterval(interval);
         } else {
           setAmountMinutesPassed(Number(timeDiff));

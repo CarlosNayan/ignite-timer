@@ -8,12 +8,11 @@ import {
   NewCycleFormData,
   newFormValidationSchema,
 } from "../../schemas/z.newFormValidationSchema";
-import { Cycle } from "../../types/cycles";
 import { Countdown } from "./components/Countdown";
 import { NewCycleForm } from "./components/NewCycleForm";
 
 export function HomePage() {
-  const { activeCycle, setCycles, setActiveCycleId, setAmountMinutesPassed } =
+  const { activeCycle, createNewCycle, interruptCycle } =
     useContext(CyclesContext);
 
   const methods = useForm<NewCycleFormData>({
@@ -27,34 +26,12 @@ export function HomePage() {
   const { handleSubmit, watch, reset } = methods;
 
   function handleCreateNewCycle(data: NewCycleFormData) {
-    const newCycle: Cycle = {
-      id: String(new Date().getTime()),
-      task: data.task,
-      minutesAmount: data.minutesAmount,
-    };
-
-    setCycles((prev) => [...prev, newCycle]);
-    setActiveCycleId(newCycle.id);
-    setAmountMinutesPassed(0);
+    createNewCycle(data);
     reset();
   }
 
   function handleInterruptCycle() {
-    setCycles((prev) =>
-      prev.map((cycle) => {
-        if (cycle.id === activeCycle?.id) {
-          return {
-            ...cycle,
-            interruptedDate: new Date(),
-          };
-        } else {
-          return cycle;
-        }
-      })
-    );
-    setActiveCycleId(null);
-    setAmountMinutesPassed(0);
-    document.title = "Ignite Timer";
+    interruptCycle();
   }
 
   const isValid = watch("task");

@@ -27,7 +27,6 @@ export function HistoryPage() {
                   <td>{cycle.minutesAmount} minutos</td>
                   <td>
                     {new Date(Number(cycle.id)).toLocaleDateString("pt-BR", {
-                      timeZone: "UTC -3:00",
                       day: "2-digit",
                       month: "short",
                       year: "numeric",
